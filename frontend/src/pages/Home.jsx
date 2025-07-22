@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FaTasks, FaPlus, FaRegClock, FaTag, FaCalendarAlt } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaTasks, FaPlus, FaRegClock, FaTag } from "react-icons/fa";
 
 const Home = () => {
   const [task, setTask] = useState({
@@ -10,22 +10,72 @@ const Home = () => {
     dueDate: "",
   });
 
+  const [tasks, setTasks] = useState([]);
+  const [counts, setCounts] = useState({ total: 0, pending: 0 });
+
+  useEffect(() => {
+    fetchTasks();
+    fetchCounts();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/tasks");
+      const data = await res.json();
+      setTasks(data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  const fetchCounts = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/tasks/counts");
+      const data = await res.json();
+      setCounts(data);
+    } catch (error) {
+      console.error("Error fetching counts:", error);
+    }
+  };
+
   const handleChange = (e) => {
     setTask({ ...task, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Call backend API here to submit task
-    console.log("Task submitted:", task);
-    // Reset form
-    setTask({
-      title: "",
-      description: "",
-      priority: "Medium Priority",
-      category: "",
-      dueDate: "",
-    });
+    try {
+      const res = await fetch("http://localhost:5000/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
+      const data = await res.json();
+      console.log("Task submitted:", data);
+      fetchTasks();
+      fetchCounts();
+      setTask({
+        title: "",
+        description: "",
+        priority: "Medium Priority",
+        category: "",
+        dueDate: "",
+      });
+    } catch (error) {
+      console.error("Error submitting task:", error);
+    }
+  };
+
+  const markTaskAsDone = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/tasks/${id}/complete`, {
+        method: "PUT",
+      });
+      fetchTasks();
+      fetchCounts();
+    } catch (error) {
+      console.error("Error marking task as done:", error);
+    }
   };
 
   return (
@@ -36,7 +86,9 @@ const Home = () => {
           <FaTasks className="text-2xl" />
           Taskly
         </div>
-        <div className="text-sm text-gray-500">0 total tasks • 0 pending</div>
+        <div className="text-sm text-gray-500">
+          {counts.total} total tasks • {counts.pending} pending
+        </div>
       </div>
 
       {/* Grid Section */}
@@ -94,19 +146,18 @@ const Home = () => {
               <div className="flex-1">
                 <label className="block mb-1 text-sm font-medium">Category</label>
                 <select
-                    name="category"
-                    value={task.category}
-                 onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  name="category"
+                  value={task.category}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 >
-                <option value="">Select Category</option>
-                <option value="Work">Work</option>
-                <option value="Personal">Personal</option>
-                <option value="Health">Health</option>
-                <option value="Study">Study</option>
-                 <option value="Others">Others</option>
+                  <option value="">Select Category</option>
+                  <option value="Work">Work</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Health">Health</option>
+                  <option value="Study">Study</option>
+                  <option value="Others">Others</option>
                 </select>
-
               </div>
             </div>
 
@@ -137,13 +188,36 @@ const Home = () => {
           </h2>
           <p className="text-sm text-gray-500 mb-4">Your 5 most recently created tasks</p>
 
-          <div className="text-center py-12 text-gray-400">
-            <div className="text-4xl mb-2">
-              <FaTag />
+          {tasks.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <div className="text-4xl mb-2">
+                <FaTag />
+              </div>
+              <p className="font-medium">No tasks yet</p>
+              <p className="text-sm text-gray-500">Create your first task to get started!</p>
             </div>
-            <p className="font-medium">No tasks yet</p>
-            <p className="text-sm text-gray-500">Create your first task to get started!</p>
-          </div>
+          ) : (
+            <ul className="space-y-3">
+              {tasks.map((t) => (
+                <li
+                  key={t.id}
+                  className="p-4 border rounded-lg bg-gray-50 shadow-sm flex justify-between items-center hover:shadow-md transition"
+                >
+                  <div>
+                    <h3 className="font-semibold text-lg">{t.title}</h3>
+                    <p className="text-sm text-gray-600">{t.description}</p>
+                    <p className="text-xs mt-1 text-gray-500">Due: {t.dueDate}</p>
+                  </div>
+                  <button
+                    onClick={() => markTaskAsDone(t.id)}
+                    className="text-sm px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                  >
+                    Done
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

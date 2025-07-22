@@ -29,3 +29,17 @@ exports.markTaskComplete = (req, res) => {
     res.json({ message: 'Task marked as completed' });
   });
 };
+
+// Get task counts: total and pending
+exports.getTaskCounts = (req, res) => {
+  const query = `
+    SELECT 
+      COUNT(*) AS total, 
+      SUM(CASE WHEN completed = FALSE THEN 1 ELSE 0 END) AS pending 
+    FROM task;
+  `;
+  db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ error: err });
+    res.json(results[0]);
+  });
+};
