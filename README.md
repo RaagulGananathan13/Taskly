@@ -39,3 +39,9 @@ Taskly is a full-stack to-do app built for a Full Stack Engineer assignment. Use
 4. **Stop the Application**:
 
    docker-compose down
+
+5. ## Testing
+
+- **Current Status**: Unit tests for database connection and integration tests for API endpoints are implemented using Jest and Supertest in the backend. All 8 tests pass with 68.51% statement coverage. Frontend unit tests for the Home component are implemented using React Testing Library.
+- **Running Tests**:
+  - Backend: Navigate to `backend/` and run `npm test` or `npm run test:coverage` for coverage reports (view `coverage/lcov-report/index.html`).
