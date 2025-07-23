@@ -15,21 +15,32 @@ const Home = () => {
   const [tasks, setTasks] = useState([]);
   const [counts, setCounts] = useState({ total: 0, pending: 0 });
 
+  // Use Vite environment variable for API base URL
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
   useEffect(() => {
     fetchTasks();
     fetchCounts();
   }, []);
 
   const fetchTasks = async () => {
-    const res = await fetch("http://localhost:5000/tasks");
-    const data = await res.json();
-    setTasks(data);
+    try {
+      const res = await fetch(`${API_BASE_URL}/tasks`);
+      const data = await res.json();
+      setTasks(data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
   };
 
   const fetchCounts = async () => {
-    const res = await fetch("http://localhost:5000/tasks/counts");
-    const data = await res.json();
-    setCounts(data);
+    try {
+      const res = await fetch(`${API_BASE_URL}/tasks/counts`);
+      const data = await res.json();
+      setCounts(data);
+    } catch (error) {
+      console.error("Error fetching counts:", error);
+    }
   };
 
   const handleChange = (e) => {
@@ -38,28 +49,36 @@ const Home = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await fetch("http://localhost:5000/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(task),
-    });
-    fetchTasks();
-    fetchCounts();
-    setTask({
-      title: "",
-      description: "",
-      priority: "Medium Priority",
-      category: "",
-      dueDate: "",
-    });
+    try {
+      await fetch(`${API_BASE_URL}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(task),
+      });
+      fetchTasks();
+      fetchCounts();
+      setTask({
+        title: "",
+        description: "",
+        priority: "Medium Priority",
+        category: "",
+        dueDate: "",
+      });
+    } catch (error) {
+      console.error("Error submitting task:", error);
+    }
   };
 
   const markTaskAsDone = async (id) => {
-    await fetch(`http://localhost:5000/tasks/${id}/complete`, {
-      method: "PUT",
-    });
-    fetchTasks();
-    fetchCounts();
+    try {
+      await fetch(`${API_BASE_URL}/tasks/${id}/complete`, {
+        method: "PUT",
+      });
+      fetchTasks();
+      fetchCounts();
+    } catch (error) {
+      console.error("Error marking task as done:", error);
+    }
   };
 
   return (
